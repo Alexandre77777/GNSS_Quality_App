@@ -3,6 +3,11 @@
 from pathlib import Path  # Класс для работы с путями к файлам.
 import plotly.express as px  # Библиотека для построения интерактивной карты.
 
+ESRI_TILES = (  # Адрес спутниковых снимков Esri World Imagery.
+    "https://server.arcgisonline.com/ArcGIS/rest/services/"
+    "World_Imagery/MapServer/tile/{z}/{y}/{x}"
+)
+
 CATEGORY_COLORS = {  # Цвета категорий на карте.
     "Принято без дополнительной проверки": "#2ca02c",
     "Требуется дополнительная проверка": "#ff7f0e",
@@ -41,7 +46,11 @@ def save_quality_map(data, map_path):
     figure.update_traces(marker={"size": 7, "opacity": 0.8}, selector={"mode": "markers"})
     figure.update_layout(  # Настраиваем карту и легенду.
         title="Вторичный контроль фиксированных RTK-решений",
-        mapbox_style="carto-positron", height=700,
+        mapbox_style="white-bg", height=700,  # Основа без сторонних сервисов.
+        mapbox_layers=[{  # Спутниковые снимки под точками и линией маршрута.
+            "sourcetype": "raster", "source": [ESRI_TILES], "below": "traces",
+            "sourceattribution": "Esri, Vantor, Earthstar Geographics, and the GIS User Community",
+        }],
         margin={"l": 0, "r": 0, "t": 45, "b": 0},
         legend={"orientation": "h", "y": 0.01, "x": 0.01})
 
