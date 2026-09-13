@@ -14,9 +14,17 @@ set "TEMP=%CD%\.runtime\tmp"
 set "TMP=%TEMP%"
 if not exist "%TEMP%" mkdir "%TEMP%"
 
-REM uv загружает Python; этот Python создаёт окружение с pip.
+REM Windows 10/11: curl или PowerShell; для каждого способа доступны astral.sh и GitHub.
 set "PSModulePath=%SystemRoot%\System32\WindowsPowerShell\v1.0\Modules"
-if not exist ".runtime\uv\uv.exe" powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression" || goto ERROR
+if not exist ".runtime\uv\uv.exe" (
+    "%SystemRoot%\System32\curl.exe" --fail --location --silent --show-error --retry 2 --connect-timeout 15 --max-time 60 https://astral.sh/uv/install.ps1 --output ".runtime\tmp\uv-install.ps1"
+    if errorlevel 1 "%SystemRoot%\System32\curl.exe" --fail --location --silent --show-error --retry 2 --connect-timeout 15 --max-time 60 https://github.com/astral-sh/uv/releases/latest/download/uv-installer.ps1 --output ".runtime\tmp\uv-install.ps1"
+    if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Write-Host 'Резервная загрузка: astral.sh / TLS 1.2'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing https://astral.sh/uv/install.ps1 -TimeoutSec 60 -OutFile '.runtime\tmp\uv-install.ps1'"
+    if errorlevel 1 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Write-Host 'Резервная загрузка: GitHub / TLS 1.2'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing https://github.com/astral-sh/uv/releases/latest/download/uv-installer.ps1 -TimeoutSec 60 -OutFile '.runtime\tmp\uv-install.ps1'" || goto ERROR
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; & '.\.runtime\tmp\uv-install.ps1'" || goto ERROR
+)
+
+REM uv загружает Python; этот Python создаёт окружение с pip.
 ".runtime\uv\uv.exe" --no-config python install 3.12 --no-bin || goto ERROR
 ".runtime\uv\uv.exe" --no-config python find 3.12 --managed-python --no-project >".runtime\python-path.txt" || goto ERROR
 set /p BASE_PY=<".runtime\python-path.txt"
