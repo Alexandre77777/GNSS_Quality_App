@@ -41,7 +41,7 @@ def save_quality_map(data, map_path):
     figure.update_traces(marker={"size": 7, "opacity": 0.8}, selector={"mode": "markers"})
     figure.update_layout(  # Настраиваем карту и легенду.
         title="Вторичный контроль фиксированных RTK-решений",
-        mapbox_style="open-street-map", height=700,
+        mapbox_style="carto-positron", height=700,
         margin={"l": 0, "r": 0, "t": 45, "b": 0},
         legend={"orientation": "h", "y": 0.01, "x": 0.01})
 
